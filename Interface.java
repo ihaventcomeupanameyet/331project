@@ -1,7 +1,11 @@
-public interface Interface() {
+
+
+public interface Interface {
+
+	void listJoinedChatRoom();
     void listChatRoom();
-    boolean joinChatRoom(String chatID);
-    boolean leaveChatRoom(String chatID);
-    boolean createChatRoom();
-    void sendMessage();
+    void joinChatRoom(ChatRoom a);
+    void leaveChatRoom(ChatRoom a);
+    void createChatRoom();
+    void sendMessage(ChatRoom chatRoom);
 }
