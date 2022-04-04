@@ -13,6 +13,9 @@ public class Message {
         text=Text;
     }
 
+    public Message(){
+        
+    }
     /**
      * @return String return the chatRoomID
      */
@@ -44,5 +47,34 @@ public class Message {
         return text;
     }
 
+
+
+    /**
+     * @param chatRoomID the chatRoomID to set
+     */
+    public void setChatRoomID(int chatRoomID) {
+        this.chatRoomID = chatRoomID;
+    }
+
+    /**
+     * @param senderEmail the senderEmail to set
+     */
+    public void setSenderEmail(String senderEmail) {
+        this.senderEmail = senderEmail;
+    }
+
+    /**
+     * @param sendTime the sendTime to set
+     */
+    public void setSendTime(String sendTime) {
+        this.sendTime = sendTime;
+    }
+
+    /**
+     * @param text the text to set
+     */
+    public void setText(String text) {
+        this.text = text;
+    }
 
 }

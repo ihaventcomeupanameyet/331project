@@ -1,4 +1,5 @@
-import java.text.SimpleDateFormat;
+import java.sql.*;
+
 import java.util.*;
 
 
@@ -13,6 +14,10 @@ public class User implements Interface{
         email=Email;
         password=Password;
         chatRoomList=new ArrayList<ChatRoom>();
+    }
+
+    public User(){
+        
     }
 
     public void addNewChatRoom(ChatRoom A){
@@ -46,6 +51,7 @@ public class User implements Interface{
      * @return String return the password
      */
     public String getPassword() {
+        
         return password;
     }
 
@@ -63,48 +69,103 @@ public class User implements Interface{
         }
     }
 
-    public void listChatRoom(){
+    public void listChatRoom(Connection c){
         System.out.println("Listing avaliable chat room: \n");
-        List<ChatRoom> avaChatRoom= new ArrayList<ChatRoom>();
-
+        try {
+            PreparedStatement statement=c.prepareStatement("select cid,name from chatrooms where cid not in(select cid from memberof natural join chatrooms where email=?)");
+            statement.setString(1,this.email);
+            ResultSet a= statement.executeQuery();
+            while(a.next()){
+                System.out.println("Chat Room ID: " + a.getString(1)+"            " + "Chat Room Name: "+a.getString(2)+"\n");
+            }
+        } catch (Exception e) {
+            //TODO: handle exception
+            e.printStackTrace();
+        }
         //some data base application to populate the list
 
-        for (int i=0; i<avaChatRoom.size(); i++){
-            System.out.println("Chat Room ID: " + avaChatRoom.get(i).getChatRoomID()+"            " + "Chat Room Name: "+avaChatRoom.get(i).getName()+"\n");
-        }
+        
     }
 
-    public void joinChatRoom(ChatRoom a){
+    public void joinChatRoom(Connection c,int chatid){
+        ChatRoom a=Main.map.get(Integer.toString(chatid));
         a.addNewUser(this);
         System.out.println("Updating list of chat room: \n");
         for (int i=0; i<chatRoomList.size(); i++){
             System.out.println("Chat Room ID: " + chatRoomList.get(i).getChatRoomID()+"            " + "Chat Room Name: "+chatRoomList.get(i).getName()+"\n");
         }
+        try {
+            PreparedStatement statement=c.prepareStatement("insert into memberof(email,cid) values (?,?)");
+            statement.setString(1, this.email);
+            statement.setString(2, Integer.toString(chatid));
+            statement.executeUpdate();
+        } catch (Exception e) {
+            //TODO: handle exception
+            e.printStackTrace();
+        }
+        Main.map.put(Integer.toString(chatid),a);
     }
-    public void leaveChatRoom(ChatRoom a){
+    public void leaveChatRoom(Connection c,int chatid){
+        ChatRoom a=Main.map.get(Integer.toString(chatid));
         a.removeUser(this);
         System.out.println("Updating list of chat room: \n");
         for (int i=0; i<chatRoomList.size(); i++){
             System.out.println("Chat Room ID: " + chatRoomList.get(i).getChatRoomID()+"            " + "Chat Room Name: "+chatRoomList.get(i).getName()+"\n");
         }
+        try {
+            PreparedStatement statement=c.prepareStatement("Delete from memberof where email=? and cid=?");
+            statement.setString(1, this.email);
+            statement.setString(2, Integer.toString(chatid));
+            statement.executeUpdate();
+        } catch (Exception e) {
+            //TODO: handle exception
+            e.printStackTrace();
+        }
+        Main.map.put(Integer.toString(chatid),a);
     }
-    public void createChatRoom(){
+    public void createChatRoom(Connection c){
         Scanner a = new Scanner(System.in);
         System.out.println("Please enter name of the chat room: ");
         String name = a.nextLine();
         ChatRoom b= new ChatRoom(this, name);
-        joinChatRoom(b);
+        joinChatRoom(c,b.getChatRoomID());
+        try {
+            PreparedStatement statement=c.prepareStatement("insert into chatrooms(cid,name) values (?,?)");
+            statement.setString(1, Integer.toString(b.getChatRoomID()));
+            statement.setString(2, name);
+            statement.executeUpdate();
+            PreparedStatement state=c.prepareStatement("insert into memberof(email,cid) values (?,?)");
+            state.setString(1, this.email);
+            state.setString(2, Integer.toString(b.getChatRoomID()));
+            state.executeUpdate();
+        } catch (Exception e) {
+            //TODO: handle exception
+            e.printStackTrace();
+        }
+        Main.map.put(Integer.toString(b.getChatRoomID()),b);
         a.close();
     }
-    public void sendMessage(ChatRoom chatRoom){
+    public void sendMessage(Connection c,int chatid){
+        ChatRoom chatroom=Main.map.get(Integer.toString(chatid));
         Scanner a = new Scanner(System.in);
         String text = a.nextLine();
-        SimpleDateFormat current = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
-        Date b= new Date();
-        String date= current.format(b);
-        Message m=new Message(chatRoom.getChatRoomID(), this.getEmail(), date, text);
-        chatRoom.updateMessageList(m);
-        chatRoom.broadcast();
+        java.util.Date b= new java.util.Date();
+        String date= Main.current.format(b);
+        Message m=new Message(chatid, this.getEmail(), date, text);
+        chatroom.updateMessageList(m);
+        chatroom.broadcast();
+        try {
+            PreparedStatement statement=c.prepareStatement("insert into message(email,cid,sendtime,text) values (?,?,?,?)");
+            statement.setString(1, this.email);
+            statement.setString(2, Integer.toString(chatid));
+            statement.setString(3,date);
+            statement.setString(4, text);
+            statement.executeUpdate();
+        } catch (Exception e) {
+            //TODO: handle exception
+            e.printStackTrace();
+        }
+        Main.map.put(Integer.toString(chatid),chatroom);
         a.close();
     }
 
@@ -116,6 +177,15 @@ public class User implements Interface{
         return chatRoomList;
     }
 
+ 
 
 
+    /**
+     * @param email the email to set
+     */
+    public void setEmail(String email) {
+        this.email = email;
+    }
+
+   
 }

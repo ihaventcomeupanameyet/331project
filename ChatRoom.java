@@ -13,6 +13,11 @@ public class ChatRoom {
         chatRoomID= 100000000 + random.nextInt(900000000);
 
     }
+
+    public ChatRoom(int id,String name){
+        chatRoomID=id;
+        this.name=name;
+    }
     /**
      * @return String return the chatRoomID
      */
